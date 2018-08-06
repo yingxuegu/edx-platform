@@ -16,6 +16,7 @@ class GradingPage(SettingsPage):
 
     url_path = "settings/grading"
     grade_ranges = '.grades .grade-specific-bar'
+    assignments = '.field-group.course-grading-assignment-list-item'
 
     def is_browser_on_page(self):
         return self.q(css='body.grading').present
@@ -82,6 +83,41 @@ class GradingPage(SettingsPage):
         moveable_css = self.q(css='.ui-resizable-e').results[0]
         action.drag_and_drop_by_offset(moveable_css, 0, 0).perform()
 
+    def get_assignment_weight(self, assignment_name):
+        """
+        Gets the weight of assignment
+        param: assignment_title: Name of the assignment
+        """
+        self.wait_for_element_visibility(
+            '#course-grading-assignment-gradeweight',
+            'Weight fields are present'
+        )
+        weight_id = '#course-grading-assignment-gradeweight'
+        index = self._get_type_index(assignment_name)
+        all_weight_elements = self.q(css=weight_id).results
+        return all_weight_elements[index].get_attribute('value')
+
+    @property
+    def get_assignment_names(self):
+        """
+        Get name of the all the assignment types.
+        Returns: A list containing names of the assignment types.
+        """
+        self.wait_for_element_visibility(
+            '#course-grading-assignment-name',
+            'Grade Names not visible.'
+        )
+        return self.q(css='#course-grading-assignment-name').attrs('value')
+
+    def change_assignment_name(self, old_name, new_name):
+        """
+        Changes the assignment name.
+        :param old_name: The assignment type name which is to be changed.
+        :param new_name: New name of the assignment.
+        """
+        self.q(css='#course-grading-assignment-name').filter(
+            lambda el: el.get_attribute('value') == old_name).fill(new_name)
+
     @property
     def grade_letters(self):
         """
@@ -111,13 +147,6 @@ class GradingPage(SettingsPage):
             return True
         except BrokenPromise:
             return False
-
-    def add_new_assignment_type(self):
-        """
-        Add New Assignment type
-        """
-        self.q(css='.add-grading-data').click()
-        self.save_changes()
 
     @property
     def grades_range(self):
@@ -177,11 +206,34 @@ class GradingPage(SettingsPage):
         while len(self.q(css='.remove-grading-data')) > 0:
             self.delete_assignment_type()
 
+    def get_confirmation_message(self):
+        """
+        Get confirmation message received after saving settings.
+        """
+        return self.q(css='#alert-confirmation-title').text[0]
+
+    def _get_type_index(self, name):
+        """
+        Gets the index of assignment type.
+        """
+        name_id = '#course-grading-assignment-name'
+        all_types = self.q(css=name_id).results
+        for index, element in enumerate(all_types):
+            if element.get_attribute('value') == name:
+                return index
+        return -1
+
     def save(self):
         """
         Click on save settings button.
         """
         press_the_notification_button(self, "Save")
+
+    def cancel(self):
+        """
+        Click on cancel settings button.
+        """
+        press_the_notification_button(self, "Cancel")
 
     def refresh_and_wait_for_load(self):
         """
