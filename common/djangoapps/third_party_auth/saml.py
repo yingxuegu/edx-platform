@@ -116,6 +116,9 @@ class SAMLAuthBackend(SAMLAuth):  # pylint: disable=abstract-method
         return super(SAMLAuthBackend, self).auth_url()
 
     def disconnect(self, *args, **kwargs):
+        """
+        Override of SAMLAuth.disconnect to unlink the learner from enterprise customer if associated.
+        """
         from . import pipeline, provider
         running_pipeline = pipeline.get(self.strategy.request)
         provider_id = provider.Registry.get_from_pipeline(running_pipeline).provider_id
