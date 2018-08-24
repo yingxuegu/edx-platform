@@ -42,15 +42,19 @@ def is_course_run_in_a_program(course_run_key):
     return False
 
 
-def send_grade_if_interesting(user, course_run_key, mode, status, letter_grade, percent_grade):
+def send_grade_if_interesting(user, course_run_key, mode, status, letter_grade, percent_grade, verbose=False):
     """ Checks if grade is interesting to Credentials and schedules a Celery task if so. """
 
     # Avoid scheduling new tasks if certification is disabled. (Grades are a part of the records/cert story)
     if not CredentialsApiConfig.current().is_learner_issuance_enabled:
+        if verbose:
+            log.info("is_learner_issuance_enabled False")
         return
 
     # Avoid scheduling new tasks if learner records are disabled for this site.
     if not helpers.get_value_for_org(course_run_key.org, 'ENABLE_LEARNER_RECORDS', True):
+        if verbose:
+            log.info("ENABLE_LEARNER_RECORDS False")
         return
 
     # Grab mode/status if we don't have them in hand
@@ -61,23 +65,48 @@ def send_grade_if_interesting(user, course_run_key, mode, status, letter_grade, 
             status = cert.status
         except GeneratedCertificate.DoesNotExist:
             # We only care about grades for which there is a certificate.
+            if verbose:
+                log.info(
+                    "GeneratedCertificate.DoesNotExist for user: {username} course_id: {course_id}".format(
+                        username=user.username,
+                        course_id=str(course_run_key)
+                    )
+                )
             return
 
     # Don't worry about whether it's available as well as awarded. Just awarded is good enough to record a verified
     # attempt at a course. We want even the grades that didn't pass the class because Credentials wants to know about
     # those too.
     if mode not in INTERESTING_MODES or status not in INTERESTING_STATUSES:
+        if verbose:
+            log.info(
+                "mode uninteresting: {mode} OR status uninteresting: {status}".format(
+                    mode=mode,
+                    status=status
+                )
+            )
         return
 
     # If the course isn't in any program, don't bother telling Credentials about it. When Credentials grows support
     # for course records as well as program records, we'll need to open this up.
     if not is_course_run_in_a_program(course_run_key):
+        if verbose:
+            log.info(
+                "course run not in a program: {course_id}".format(course_id=str(course_run_key))
+            )
         return
 
     # Grab grades if we don't have them in hand
     if letter_grade is None or percent_grade is None:
         grade = CourseGradeFactory().read(user, course_key=course_run_key, create_if_needed=False)
         if grade is None:
+            if verbose:
+                log.info(
+                    "No grade found for user: {username} course_id: {course_id}".format(
+                        username=user.username,
+                        course_id=str(course_run_key)
+                    )
+                )
             return
         letter_grade = grade.letter_grade
         percent_grade = grade.percent
