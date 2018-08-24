@@ -125,17 +125,26 @@ def node_prereqs_installation():
     """
     Configures npm and installs Node prerequisites
     """
+    # NPM installs hang sporadically. Log the installation process so that we
+    # determine if any packages are chronic offenders.
+    shard_str = os.getenv('SHARD', None)
+    if shard_str:
+        npm_log_file = '{}/npm-install.{}.log'.format(Env.GEN_LOG_DIR, shard_str)
+    else:
+        npm_log_file = '{}/npm-install.log'.format(Env.GEN_LOG_DIR)
+    npm_command = 'npm install --verbose |tee {}'.format(npm_log_file)
+
     cb_error_text = "Subprocess return code: 1"
 
     # Error handling around a race condition that produces "cb() never called" error. This
     # evinces itself as `cb_error_text` and it ought to disappear when we upgrade
     # npm to 3 or higher. TODO: clean this up when we do that.
     try:
-        sh('npm install')
+        sh(npm_command)
     except BuildFailure, error_text:
         if cb_error_text in error_text:
             print "npm install error detected. Retrying..."
-            sh('npm install')
+            sh(npm_command)
         else:
             raise BuildFailure(error_text)
 
