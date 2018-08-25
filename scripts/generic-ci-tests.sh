@@ -60,6 +60,9 @@ git clean -qxfd
 
 export COVERAGE_DEBUG=sys,config
 export COVERAGE_DEBUG_FILE=reports/covdebug.txt
+export COVERAGE_LOG=reports/covdebug.txt
+export COVERAGE_ASPECTLIB=coverage.Coverage
+
 echo "Reports contents before:"
 ls -al reports || true
 
