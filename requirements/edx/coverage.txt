@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-git+https://github.com/nedbat/coveragepy.git@6424ad9538b9681bf8d2bf1037d3b64ccb270228#egg=coverage==0.0
+git+https://github.com/nedbat/coveragepy.git@a2f019ff7c9d5ad19a059af285e9836a34a89656#egg=coverage==0.0
 aspectlib
 diff-cover==0.9.8
 inflect==1.0.0            # via jinja2-pluralize

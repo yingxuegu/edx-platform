@@ -62,6 +62,7 @@ export COVERAGE_DEBUG=sys,config
 export COVERAGE_DEBUG_FILE=reports/covdebug.txt
 #export COVERAGE_LOG=reports/covdebug.txt
 #export COVERAGE_ASPECTLIB=coverage.Coverage
+export COVERAGE_DEBUG_CALLS=1
 
 echo "Reports contents before:"
 ls -al reports || true
